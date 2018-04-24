@@ -61,8 +61,9 @@ nclp <- function(PHI_n, THETA, PSI, docs, eta, gamma, beta) {
 #' @param beta The precision for topic locations, a positive scalar.
 #' @param gama The precision for document locations, a positive scalar.
 #' @param make_plot A boolean, if TRUE, will make a ggplot visualization of the topics and documents, with topics in red.
-#' @param THETA_fix A list 
+#' @param THETA_fix A list of lists, used to fix rows of THETA to a given value. Each sublist has two elements: 'ind' and 'val'. 'ind' Indicates the row, 1-index, of THETA to fix, and 'val', a real valued P-vector, indicates the value to fix it to.
 #' @return A list containing ests, a list with PHI, the topic by document matrix, THETA, the document locations in P-D space, and PSI, the topic locations in P-D space.
+#' @export
 num_post_plsv <- function(docs, K, V, P, eta, gamma, beta, 
                           make_plot = FALSE, THETA_fix = list(), PSI_fix = list()) {
 

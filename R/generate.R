@@ -14,6 +14,19 @@ eta <- 2
 gamma <- 0.1 * K
 beta <- 0.1 * M
 
+#' Generate from the PLSV model
+#'
+#'
+#' @param K The number of topics, an integer scalar.
+#' @param V The number of unique words, an integer scalar.
+#' @param M The number of documents, an integer scalar.
+#' @param N.mu The average number of words per document.
+#' @param P The dimensionality of the embedding space, an integer, usually 2.
+#' @param eta The exchangible dirichlet prior on words in a topic.
+#' @param beta The precision for topic locations, a positive scalar.
+#' @param gama The precision for document locations, a positive scalar.
+#' @return A list containing the generated data, in particular, PHI is the topic by word matrix (rows sum to 1), PSI is a topic location matrix, docs is a list of generated documents, each entry denotes index of vocab, THETA is the document locations, and Z is a list of matrices, with a 1 denoting which topic the word belonged to.
+#' @export
 gen_plsv <- function(K, V, M, N.mu, P, eta, gamma, beta) {
     if (min(eta) < 0 || gamma < 0 || beta < 0) {
         stop("Hyperparameters for this model must be positive")
