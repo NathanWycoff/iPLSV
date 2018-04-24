@@ -61,11 +61,15 @@ nclp <- function(PHI_n, THETA, PSI, docs, eta, gamma, beta) {
 #' @param beta The precision for topic locations, a positive scalar.
 #' @param gama The precision for document locations, a positive scalar.
 #' @param make_plot A boolean, if TRUE, will make a ggplot visualization of the topics and documents, with topics in red.
+#' @param THETA_init A real matrix with as many rows as docs has and P many columns, giving an initial value for THETA.
+#' @param PSI_init A real matrix with K many rows and P many columns, giving an initial value for PSI
+#' @param PHI_init A matrix of K many V-1-simplex valued rows, giving the initial value for PHI
 #' @param THETA_fix A list of lists, used to fix rows of THETA to a given value. Each sublist has two elements: 'ind' and 'val'. 'ind' Indicates the row, 1-index, of THETA to fix, and 'val', a real valued P-vector, indicates the value to fix it to.
 #' @return A list containing ests, a list with PHI, the topic by document matrix, THETA, the document locations in P-D space, and PSI, the topic locations in P-D space.
 #' @export
 num_post_plsv <- function(docs, K, V, P, eta, gamma, beta, 
-                          make_plot = FALSE, THETA_fix = list(), PSI_fix = list()) {
+                          make_plot = FALSE, THETA_init = NULL, 
+                          PSI_init = NULL, PHI_init = NULL, THETA_fix = list()) {
 
     M <- nrow(docs)
 
@@ -120,23 +124,30 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
         nclp(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta)
     }
 
+    # Do random inits if none were provided
+    if (is.null(PSI_init)) {
+        PSI_init <- matrix(rnorm(K*P), ncol = P)
+    }
+    if (is.null(THETA_init)) {
+        THETA_init <- matrix(rnorm(M*P), ncol = P)
+    }
+    if (is.null(PHI_init)) {
+        PHI_n_init <- matrix(rnorm(K*(V-1)), ncol = V-1)
+    } else {
+        #Convert users simplex to real valued matrix for optim
+        PHI_n_init <- t(apply(PHI_init, 1, inv_softmax))[,-V]
+    }
 
-    #Initialize at the truth
-    #PSI_start <- PSI
-    #THETA_start <- THETA
-    #PHI_n_start <- t(apply(PHI, 1, inv_softmax))[,-V]
-
-    #Initialize randomly
-    PSI_start <- matrix(rnorm(K*P), ncol = P)
-    THETA_start <- matrix(rnorm(M*P), ncol = P)
-    PHI_n_start <- matrix(rnorm(K*(V-1)), ncol = V-1)
-
-    #TODO: Init intelligently.
+    #TODO: Default inits based on LDA
 
     # Do the actual optimization
-    fit <- optim(mat3par(PHI_n_start, PSI_start, THETA_start), joint_nclp_wrap, 
-                 method = 'BFGS')
+    fit <- optim(mat3par(PHI_n_init, PSI_init, THETA_init), joint_nclp_wrap, 
+                 method = 'BFGS', control = list('maxit' = 1e3))
     ests <- par3mat(fit$par, K, V, P)
+
+    if (fit$convergence) {
+        warning("Convergence Failure in num_post_plsv")
+    }
 
     #Get PHI from PHI_n, with a 0 fixed as the last word for identifiability.
     ests$PHI <- t(apply(cbind(ests$PHI_n, 0), 1, softmax))
