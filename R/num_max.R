@@ -69,11 +69,18 @@ nclp <- function(PHI_n, THETA, PSI, docs, eta, gamma, beta) {
 #' @export
 num_post_plsv <- function(docs, K, V, P, eta, gamma, beta, 
                           make_plot = FALSE, THETA_init = NULL, 
-                          PSI_init = NULL, PHI_init = NULL, THETA_fix = list()) {
+                          PSI_init = NULL, PHI_init = NULL, 
+                          THETA_fix = list(), PSI_fix = list()) {
 
     M <- nrow(docs)
 
+    # Get the indices of fixed params.
     THETA_inds <- sapply(THETA_fix, function(i) i$ind)
+    PSI_inds <- sapply(PSI_fix, function(i) i$ind)
+    if (max(THETA_inds) > M || max(PSI_inds) > K) {
+        stop("Check the indices of your fixed values: one of them is larger than the corresponding matrix")
+    }
+
     ## Maximize the log posterior with respect to the doc and topic locations.
 
     # A vector representation of our three matrices, for use in numerical optimization
@@ -85,9 +92,16 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
         } else {
             THETA_pass <- as.numeric(THETA)
         }
+        if (length(PSI_inds) > 0) {
+            PSI_pass <- as.numeric(PSI[-PSI_inds,])
+        } else {
+            PSI_pass <- as.numeric(PSI)
+        }
+
+        #Only otimize the fixed vals.
         par <- c(as.numeric(PHI_n), 
                  #as.numeric(PSI[-PSI_inds,]), 
-                 as.numeric(PSI), 
+                 PSI_pass, 
                  THETA_pass)
         return(par)
     }
@@ -96,8 +110,10 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
     par3mat <- function(par, K, V, P) {
         #Convert from vectors to matrices
         to1 <- K*(V-1)
-        to2 <- K*P
+        to2 <- (K - length(PSI_inds))*P
+
         PHI_n <- par[1:to1]
+
         PSI <- par[(to1+1):(to1+to2)]
         THETA <- par[(to1+to2+1):(length(par))]
 
@@ -113,6 +129,14 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
                     } else {
                         ind <- i - sum(THETA_inds < i)
                         return(THETA[ind,])
+                    }
+                 }))
+        PSI <- t(sapply(1:K, function(i) {
+                    if (i %in% PSI_inds) {
+                        return(PSI_fix[[which(PSI_inds==i)]]$val)
+                    } else {
+                        ind <- i - sum(PSI_inds < i)
+                        return(PSI[ind,])
                     }
                  }))
 
