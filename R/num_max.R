@@ -72,14 +72,16 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
                           PSI_init = NULL, PHI_init = NULL, 
                           THETA_fix = list(), PSI_fix = list()) {
 
+
     M <- nrow(docs)
 
     # Get the indices of fixed params.
     THETA_inds <- sapply(THETA_fix, function(i) i$ind)
     PSI_inds <- sapply(PSI_fix, function(i) i$ind)
-    if (max(THETA_inds) > M || max(PSI_inds) > K) {
-        stop("Check the indices of your fixed values: one of them is larger than the corresponding matrix")
-    }
+    #TODO: This code doesn't work lmao
+    #if (max(THETA_inds) > M || max(PSI_inds) > K) {
+    #    stop("Check the indices of your fixed values: one of them is larger than the corresponding matrix")
+    #}
 
     ## Maximize the log posterior with respect to the doc and topic locations.
 
