@@ -1,19 +1,6 @@
 #!/usr/bin/Rscript
 #  R/generate.R Author "Nathan Wycoff <nathanbrwycoff@gmail.com>" Date 04.20.2018
 
-## Generate PLSV variates.
-
-set.seed(1234)
-
-K <- 3
-V <- 4
-M <- 20
-N.mu <- 3000
-P <- 2
-eta <- 2
-gamma <- 0.1 * K
-beta <- 0.1 * M
-
 #' Generate from the PLSV model
 #'
 #'
