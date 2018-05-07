@@ -7,14 +7,13 @@ require(ggplot2)
 require(gridExtra)
 
 #Plot the two boxplots
-ggdf <- as.data.frame(cbind(1, rand_times, rand_costs))
-pt <- ggplot(ggdf, aes(x = V1, y= rand_times)) +
+ggdf <- as.data.frame(cbind(c(rep('Smart', data_sets), rep('Random', data_sets)), c(ldapca_times, rand_times), c(ldapca_costs, rand_costs)))
+colnames(ggdf) <- c('Type', 'Time', 'Cost')
+pt <- ggplot(ggdf, aes(x = Type, y = Time)) +
     geom_boxplot() + 
-    geom_hline(yintercept = ldapca_time) + 
     theme_light()
-pc <- ggplot(ggdf, aes(x = V1, y= rand_costs)) +
+pc <- ggplot(ggdf, aes(x = Type, y = Cost)) +
     geom_boxplot() + 
-    geom_hline(yintercept = ldapca_cost) + 
     theme_light()
 
 a <- arrangeGrob(pt, pc, nrow = 1)
