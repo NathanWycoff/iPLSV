@@ -1,15 +1,15 @@
 #!/usr/bin/Rscript
 #  R/tests/t_em_max.R Author "Nathan Wycoff <nathanbrwycoff@gmail.com>" Date 05.07.2018
 
-source('R/generate.R')
-source('R/lib.R')
-source('R/num_max.R')
-source('R/em_max.R')
+#source('R/generate.R')
+#source('R/lib.R')
+#source('R/num_max.R')
+#source('R/em_max.R')
 
 set.seed(123)
 
 K <- 3
-V <- 400
+V <- 4000
 M <- 20
 N.mu <- 300
 P <- 2
@@ -24,11 +24,12 @@ docs_list <- lapply(1:M, function(i) unlist(sapply(1:V, function(j) rep(j, ret$d
 docs <- docs_list
 
 
-system.time(fit <- em_plsv(docs, K, V, P, eta, gamma, beta, 
-                          make_plot = FALSE, THETA_init = ret$THETA, 
-                          PSI_init = ret$PSI, PHI_init = ret$PHI, 
+set.seed(123)
+system.time(fit <- em_plsvn(docs, K, V, P, eta, gamma, beta, 
+                          make_plot = FALSE, THETA_init = 'smart', 
+                          PSI_init = 'smart', PHI_init = 'smart', 
                           THETA_fix = list(), PSI_fix = list(),
-                          verbose = TRUE, thresh = 1e-2,
+                          verbose = TRUE, thresh = 5e-2,
                           max_iters = 1e3))
 
 comp_scat2d(ret$THETA, ret$PSI)

@@ -3,11 +3,21 @@
 
 ## Numerically maximize the posterior with latent vars integrated out.
 
-# Negative Complete Log Posterior
-nclp <- function(PHI_n, THETA, PSI, docs, eta, gamma, beta) {
-    #Transform back to the simplex.
-    PHI_n <- cbind(PHI_n, 0)
-    PHI <- t(apply(PHI_n, 1, softmax))
+#' Negative Complete Log Posterior
+#'
+#' The log posterior with the latent class assignments integrated out, evaluated at PHI_n, THETA, PSI as specified, given docs.
+#'
+#' @param PHI_n A K by V matrix with simplex valued rows giving the the probabilty of words (cols) in topics (rows).
+#' @param THETA M by P real valued matrix, giving P-d locations of documents.
+#' @param PSI K by P real valued matrix, giving P-d locations of topics
+#' @param docs A term frequency matrix, that is, one with a row for each document, a column for each vocab word, and integer entries indicating the occurence of a word in a doc.
+#' @param eta The exchangible dirichlet prior on words in a topic.
+#' @param beta The precision for topic locations, a positive scalar.
+#' @param gama The precision for document locations, a positive scalar.
+#' @param make_plot A boolean, if TRUE, will make a ggplot visualization of the topics and documents, with topics in red.
+#' @return A scalar, giving the negative log posterior density at the point.
+#' @export
+nclp <- function(PHI, THETA, PSI, docs, eta, gamma, beta) {
 
     ## Generate parameters
     ll <- 0
@@ -147,7 +157,10 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
 
     joint_nclp_wrap <- function(par) {
         ret <- par3mat(par, K, V, P)
-        nclp(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta)
+        #Transform back to the simplex.
+        ret$PHI_n <- cbind(PHI_n, 0)
+        ret$PHI <- t(apply(PHI_n, 1, softmax))
+        nclp(ret$PHI, ret$THETA, ret$PSI, docs, eta, gamma, beta)
     }
 
     # Do random inits if none were provided
