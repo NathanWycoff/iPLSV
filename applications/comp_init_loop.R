@@ -78,4 +78,7 @@ rand_costs <- sapply(ret, function(i) i[4])
 
 stopCluster(cl)
 
-save(rand_times, rand_costs, ldapca_time, ldapca_cost, file = 'data/comp_init.RData')
+ggdf <- as.data.frame(cbind(c(rep('Smart', data_sets), rep('Random', data_sets)), c(ldapca_times, rand_times), c(ldapca_costs, rand_costs)))
+colnames(ggdf) <- c('Type', 'Time', 'Cost')
+
+save(rand_times, rand_costs, ldapca_times, ldapca_costs, ggdf, file = 'data/comp_init.RData')

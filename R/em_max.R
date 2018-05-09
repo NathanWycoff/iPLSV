@@ -227,6 +227,7 @@ em_plsvn <- function(docs, K, V, P, eta, gamma, beta,
             Z_exp[[i]] <- Z_exp[[i]] / rowSums(Z_exp[[i]])
         }
 
+        ##### M STEP
         # Wrap cost and gradient to work with vectors.
         costwrap <- function(par) {
             pars <- par2mat(par, K, P, PSI_inds, THETA_inds)

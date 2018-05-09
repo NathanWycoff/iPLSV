@@ -6,9 +6,11 @@ load('data/comp_init.RData')
 require(ggplot2)
 require(gridExtra)
 
+ggdf$Cost <- as.numeric(as.character(ggdf$Cost))
+ggdf$Time <- as.numeric(as.character(ggdf$Time))
+
 #Plot the two boxplots
-ggdf <- as.data.frame(cbind(c(rep('Smart', data_sets), rep('Random', data_sets)), c(ldapca_times, rand_times), c(ldapca_costs, rand_costs)))
-colnames(ggdf) <- c('Type', 'Time', 'Cost')
+rownames(ggdf) <- NULL
 pt <- ggplot(ggdf, aes(x = Type, y = Time)) +
     geom_boxplot() + 
     theme_light()
