@@ -50,5 +50,9 @@ for (i in 1:M) {
 }
 
 
+## The Cpp code is about 20 times faster in each case.
 microbenchmark(exp_nlpostC(Z_exp, ret$PHI, ret$THETA, ret$PSI, docs, Ns, eta, gamma, beta))
 microbenchmark(exp_nlpost(Z_exp, ret$PHI, ret$THETA, ret$PSI, docs, eta, gamma, beta))
+
+microbenchmark(g_enlpC(Z_exp, ret$PHI, ret$THETA, ret$PSI, docs, Ns, eta, gamma, beta))
+microbenchmark(g_enlp(Z_exp, ret$PHI, ret$THETA, ret$PSI, docs, eta, gamma, beta))

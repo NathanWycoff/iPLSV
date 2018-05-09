@@ -147,6 +147,7 @@ par2mat <- function(par, K, P, PSI_inds, THETA_inds) {
 #' @param verbose Boolean, if TRUE, tells you what the biggest jump of on screen coords is.
 #' @param thresh The threshold for the entire EM algo; if the biggest absolute difference between coordinates onscreen is less than this, the algo stops.
 #' @param max_iters The maximum number of EM iterations allowed, an integer scalar.
+#' @param lik_grad A character scalar, one of 'R' or 'Cpp'. Functions are written in both languages for the likelihood and gradient. Cpp is much faster. This option will be removed once Cpp is confirmed to work.
 #' @return A list containing ests, a list with PHI, the topic by document matrix, THETA, the document locations in P-D space, and PSI, the topic locations in P-D space.
 #' @export
 em_plsvn <- function(docs, K, V, P, eta, gamma, beta, 
@@ -154,7 +155,7 @@ em_plsvn <- function(docs, K, V, P, eta, gamma, beta,
                           PSI_init = NULL, PHI_init = NULL, 
                           THETA_fix = list(), PSI_fix = list(),
                           verbose = FALSE, thresh = 1e-2,
-                          max_iters = 1e3) {
+                          max_iters = 1e3, lik_grad = 'R') {
     M <- length(docs)
     Ns <- sapply(docs, length)
 
@@ -231,12 +232,25 @@ em_plsvn <- function(docs, K, V, P, eta, gamma, beta,
         # Wrap cost and gradient to work with vectors.
         costwrap <- function(par) {
             pars <- par2mat(par, K, P, PSI_inds, THETA_inds)
-            exp_nlpost(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, eta, gamma, beta)
+            if (lik_grad == 'R') {
+                exp_nlpost(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, eta, gamma, beta)
+            } else if (lik_grad == 'Cpp')  {
+                exp_nlpostC(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, Ns, eta, gamma, beta)
+            } else {
+                stop("lik_grad should be one of R or Cpp")
+            }
+
         }
 
         gradwrap <- function(par) {
             pars <- par2mat(par, K, P, PSI_inds, THETA_inds)
-            grads <- g_enlp(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, eta, gamma, beta)
+            if (lik_grad == 'R') {
+                 grads <- g_enlp(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, eta, gamma, beta)
+            } else if (lik_grad == 'Cpp') {
+                 grads <- g_enlpC(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, Ns, eta, gamma, beta)
+            } else {
+                stop("lik_grad should be one of R or Cpp")
+            }
             mat2par(grads$grad_PSI, grads$grad_THETA, PSI_inds, THETA_inds)
         }
 
