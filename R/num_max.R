@@ -3,21 +3,24 @@
 
 ## Numerically maximize the posterior with latent vars integrated out.
 
-#' Negative Complete Log Posterior
+#' Negative Incomplete Log Posterior
 #'
-#' The log posterior with the latent class assignments integrated out, evaluated at PHI_n, THETA, PSI as specified, given docs.
+#' The log posterior with the latent class assignments integrated out, evaluated at PHI, THETA, PSI as specified, given docs.
 #'
-#' @param PHI_n A K by V matrix with simplex valued rows giving the the probabilty of words (cols) in topics (rows).
+#' @param PHI A K by V matrix with simplex valued rows giving the the probabilty of words (cols) in topics (rows).
 #' @param THETA M by P real valued matrix, giving P-d locations of documents.
 #' @param PSI K by P real valued matrix, giving P-d locations of topics
 #' @param docs A term frequency matrix, that is, one with a row for each document, a column for each vocab word, and integer entries indicating the occurence of a word in a doc.
 #' @param eta The exchangible dirichlet prior on words in a topic.
 #' @param beta The precision for topic locations, a positive scalar.
 #' @param gama The precision for document locations, a positive scalar.
-#' @param make_plot A boolean, if TRUE, will make a ggplot visualization of the topics and documents, with topics in red.
+#' @param soft_PHI A boolean, if TRUE, PHI was provided on the logodds scales.
 #' @return A scalar, giving the negative log posterior density at the point.
 #' @export
-nclp <- function(PHI, THETA, PSI, docs, eta, gamma, beta) {
+nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
+    if (soft_PHI) {
+        PHI <- t(apply(cbind(PHI, 0), 1, softmax))
+    }
 
     ## Generate parameters
     ll <- 0
@@ -57,6 +60,70 @@ nclp <- function(PHI, THETA, PSI, docs, eta, gamma, beta) {
     }
 
     return(-ll)
+}
+
+#' The Gradient of the Incomplete Log Posterior
+#' 
+#' this boii accepts a list of docs for right now.
+g_nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
+    Ns <- sapply(docs, length)
+    if (soft_PHI) {
+        PHI <- t(apply(cbind(PHI, 0), 1, softmax))
+    }
+
+    # Prior Contribution
+    grad_THETA <- -gamma * THETA
+    grad_PSI <- -beta * PSI
+
+    # Get probability of topic in each doc
+    RHO <- matrix(NA, nrow = M, ncol = K)
+    for (i in 1:M) {
+        dists <- sapply(1:K, function(k) sum((THETA[i,] - PSI[k,])^2))
+        RHO[i,] <- softmax(-0.5 * dists)
+    }
+
+    # Prob of each word in each doc
+    PI <- RHO %*% PHI
+
+    # Gradients for THETA
+    for (i in 1:M) {
+        for (j in 1:Ns[i]) {
+            w <- docs[[i]][j]
+            for (k in 1:K) {
+                for (l in 1:K) {
+                    grad_THETA[i,] <- grad_THETA[i,] + 
+                        PHI[k, w] / PI[i, w] * RHO[i,k] * (as.numeric(l==k) - RHO[i,l]) * (PSI[l, ] - THETA[i,])
+                }
+            }
+        }
+    }
+
+    #Gradients for PSI
+    for (i in 1:M) {
+        for (j in 1:Ns[i]) {
+            w <- docs[[i]][j]
+            for (k in 1:K) {
+                for (l in 1:K) {
+                    grad_PSI[k,] <- grad_PSI[k,] + 
+                        PHI[l, w] / PI[i, w] * RHO[i,l] * (as.numeric(l==k) - RHO[i,k]) * (THETA[i,] - PSI[k,])
+                }
+            }
+        }
+    }
+
+    #Gradients for PHI
+    grad_PHI <- matrix(0, nrow = K, ncol = V)
+    for (k in 1:K) {
+        for (i in 1:M) {
+            for (j in 1:Ns[i]) {
+                w <- docs[[i]][j]
+                print(RHO[i,k] / PI[i, w])
+                grad_PHI[k, w] <- grad_PHI[k, w] + RHO[i,k] / PI[i, w]
+            }
+        }
+    }
+
+    return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = grad_PHI))
 }
 
 #' Numerically Maximize complete Posterior.
@@ -157,10 +224,7 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
 
     joint_nclp_wrap <- function(par) {
         ret <- par3mat(par, K, V, P)
-        #Transform back to the simplex.
-        ret$PHI_n <- cbind(PHI_n, 0)
-        ret$PHI <- t(apply(PHI_n, 1, softmax))
-        nclp(ret$PHI, ret$THETA, ret$PSI, docs, eta, gamma, beta)
+        nclp(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
     }
 
     # Do random inits if none were provided

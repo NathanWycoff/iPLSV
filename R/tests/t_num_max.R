@@ -3,6 +3,9 @@
 
 #Test out the num_max function.
 set.seed(1234)
+require(iplsv)
+source("R/num_max.R")
+require(ggplot2)
 
 K <- 3
 V <- 4
@@ -15,5 +18,11 @@ beta <- 0.1 * M
 
 ret <- gen_plsv(K, V, M, N.mu, P, eta, gamma, beta)
 
-fit <- num_post_plsv(ret$docs, K, V, P, eta, gamma, beta)
-comp_scat2d(fit$par$THETA, fit$par$PSI)
+fit1 <- num_post_plsv(ret$docs, K, V, P, eta, gamma, beta)
+fit2 <- num_post_plsv(ret$docs, K, V, P, eta, gamma, beta, PHI_init = ret$PHI, THETA_init = ret$THETA, PSI_init = ret$PSI)
+
+comp_scat2d(fit1$par$THETA, fit1$par$PSI)
+quartz()
+comp_scat2d(fit2$par$THETA, fit2$par$PSI)
+
+comp_scat2d(ret$THETA, ret$PSI)

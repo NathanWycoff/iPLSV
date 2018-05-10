@@ -74,7 +74,7 @@ comp_scat2d <- function(A, B, rot = FALSE, scale_ax = FALSE, obnoxious = FALSE) 
         geom_text(aes(label=ID)) +
         geom_text(data = Bdf,
             mapping = aes(x = V1, y = V2, label = ID, color = 'red')) + 
-        theme_dark()
+        theme_light()
 
     print(p)
 }

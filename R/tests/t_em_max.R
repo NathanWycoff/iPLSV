@@ -1,15 +1,14 @@
 #!/usr/bin/Rscript
 #  R/tests/t_em_max.R Author "Nathan Wycoff <nathanbrwycoff@gmail.com>" Date 05.07.2018
 
-require(Rcpp)
-source('R/generate.R')
-source('R/lib.R')
-source('R/num_max.R')
-source('R/em_max.R')
+require(iplsv)
+require(LdaFuncs)
+require(ggplot2)
+source("R/lib.R")
 
 set.seed(123)
 
-K <- 5
+K <- 3
 V <- 4000
 M <- 20
 N.mu <- 300
@@ -24,20 +23,24 @@ ret <- gen_plsv(K, V, M, N.mu, P, eta, gamma, beta)
 docs_list <- lapply(1:M, function(i) unlist(sapply(1:V, function(j) rep(j, ret$docs[i,j]))))
 docs <- docs_list
 
-
+#Test using smart init
 set.seed(123)
-system.time(fit <- em_plsvn(docs, K, V, P, eta, gamma, beta, 
+system.time(fit <- em_plsv(docs, K, V, P, eta, gamma, beta, 
                           make_plot = FALSE, THETA_init = 'smart', 
                           PSI_init = 'smart', PHI_init = 'smart', 
                           THETA_fix = list(), PSI_fix = list(),
                           verbose = TRUE, thresh = 5e-2,
-                          max_iters = 1e3))
+                          max_iters = 1e3, lik_grad = 'Cpp'))
 
-sourceCpp("src/exp_nlpost.cpp")
+comp_scat2d(ret$THETA, ret$PSI)
+quartz()
+comp_scat2d(fit$par$THETA, fit$par$PSI)
+
+# Test that we don't move away from the truth
 set.seed(123)
-system.time(fit <- em_plsvn(docs, K, V, P, eta, gamma, beta, 
-                          make_plot = FALSE, THETA_init = 'smart', 
-                          PSI_init = 'smart', PHI_init = 'smart', 
+system.time(fit <- em_plsv(docs, K, V, P, eta, gamma, beta, 
+                          make_plot = FALSE, THETA_init = ret$THETA, 
+                          PSI_init = ret$PSI, PHI_init = ret$PHI, 
                           THETA_fix = list(), PSI_fix = list(),
                           verbose = TRUE, thresh = 5e-2,
                           max_iters = 1e3, lik_grad = 'Cpp'))

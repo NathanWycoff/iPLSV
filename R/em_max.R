@@ -94,7 +94,7 @@ mat2par <- function(PSI, THETA, PSI_inds, THETA_inds) {
     return(c(PSI_pass, THETA_pass))
 }
 
-par2mat <- function(par, K, P, PSI_inds, THETA_inds) {
+par2mat <- function(par, K, P, PSI_inds, THETA_inds, PSI_fix, THETA_fix) {
     #Convert from vectors to matrices
     to1 <- (K - length(PSI_inds))*P
 
@@ -150,7 +150,7 @@ par2mat <- function(par, K, P, PSI_inds, THETA_inds) {
 #' @param lik_grad A character scalar, one of 'R' or 'Cpp'. Functions are written in both languages for the likelihood and gradient. Cpp is much faster. This option will be removed once Cpp is confirmed to work.
 #' @return A list containing ests, a list with PHI, the topic by document matrix, THETA, the document locations in P-D space, and PSI, the topic locations in P-D space.
 #' @export
-em_plsvn <- function(docs, K, V, P, eta, gamma, beta, 
+em_plsv <- function(docs, K, V, P, eta, gamma, beta, 
                           make_plot = FALSE, THETA_init = NULL, 
                           PSI_init = NULL, PHI_init = NULL, 
                           THETA_fix = list(), PSI_fix = list(),
@@ -231,7 +231,7 @@ em_plsvn <- function(docs, K, V, P, eta, gamma, beta,
         ##### M STEP
         # Wrap cost and gradient to work with vectors.
         costwrap <- function(par) {
-            pars <- par2mat(par, K, P, PSI_inds, THETA_inds)
+            pars <- par2mat(par, K, P, PSI_inds, THETA_inds, PSI_fix, THETA_fix)
             if (lik_grad == 'R') {
                 exp_nlpost(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, eta, gamma, beta)
             } else if (lik_grad == 'Cpp')  {
@@ -243,7 +243,7 @@ em_plsvn <- function(docs, K, V, P, eta, gamma, beta,
         }
 
         gradwrap <- function(par) {
-            pars <- par2mat(par, K, P, PSI_inds, THETA_inds)
+            pars <- par2mat(par, K, P, PSI_inds, THETA_inds, PSI_fix, THETA_fix)
             if (lik_grad == 'R') {
                  grads <- g_enlp(Z_exp, est$PHI, pars$THETA, pars$PSI, docs, eta, gamma, beta)
             } else if (lik_grad == 'Cpp') {
@@ -258,7 +258,7 @@ em_plsvn <- function(docs, K, V, P, eta, gamma, beta,
         # Do the actual optimization!
         fit <- optim(mat2par(est$PSI, est$THETA, PSI_inds, THETA_inds), costwrap, gradwrap, method = 'BFGS')
         last_est <- est
-        n_est <- par2mat(fit$par, K, P, PSI_inds, THETA_inds)
+        n_est <- par2mat(fit$par, K, P, PSI_inds, THETA_inds, PSI_fix, THETA_fix)
         n_est$PHI <- est$PHI
         est <- n_est
 
