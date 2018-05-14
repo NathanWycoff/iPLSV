@@ -60,5 +60,8 @@ gen_plsv <- function(K, V, M, N.mu, P, eta, gamma, beta) {
         docs[i,] <- rmultinom(1, Ns[i], PI[i,])
     }
 
-    return(list(PHI = PHI, THETA = THETA, PSI = PSI, docs = docs))
+    # Convert docs from TF form to a list of vecs
+    docs_list <- lapply(1:M, function(i) unlist(sapply(1:V, function(j) rep(j, ret$docs[i,j]))))
+
+    return(list(PHI = PHI, THETA = THETA, PSI = PSI, docs = docs_list))
 }
