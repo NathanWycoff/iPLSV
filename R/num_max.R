@@ -65,6 +65,56 @@ nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
     return(-ll)
 }
 
+num_nlip_grad <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = FALSE) {
+    h <- 1e-6
+    nP <- matrix(NA, nrow = K, ncol = P)
+    for (k in 1:K) {
+        for (p in 1:P) {
+            f <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = soft_PHI)
+            PSI[k,p] <- PSI[k,p] + h
+            fp <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = soft_PHI)
+            nP[k,p] <- (fp - f) / h
+        }
+    }
+
+    nT <- matrix(NA, nrow = M, ncol = P)
+    for (m in 1:M) {
+        for (p in 1:P) {
+            f <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = soft_PHI)
+            THETA[m,p] <- THETA[m,p] + h
+            fp <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = soft_PHI)
+            nT[m,p] <- (fp - f) / h
+        }
+    }
+
+    if (soft_PHI) {
+        nR <- matrix(NA, nrow = K, ncol = V-1)
+        for (k in 1:K) {
+            for (v in 1:(V-1)) {
+                f <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
+                PHI[k,v] <- PHI[k,v] + h
+                fp <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
+                nR[k,v] <- (fp - f) / h
+            }
+        }
+
+        return(list( grad_THETA = nT, grad_PSI = nP, grad_PHI = nR))
+
+    } else {
+        nH <- matrix(NA, nrow = K, ncol = V)
+        for (k in 1:K) {
+            for (v in 1:V) {
+                f <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = FALSE)
+                PHI[k,v] <- PHI[k,v] + h
+                fp <- nlip(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI = FALSE)
+                nH[k,v] <- (fp - f) / h
+            }
+        }
+    }
+    return(list( grad_THETA = nT, grad_PSI = nP,grad_PHI = nH))
+}
+
+
 #' The Gradient of the Log Incomplete Posterior
 #' 
 #' this boii accepts a list of docs for right now.
@@ -77,6 +127,7 @@ g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
     # Prior Contribution
     grad_THETA <- -gamma * THETA
     grad_PSI <- -beta * PSI
+    grad_PHI <- (eta - 1) / PHI
 
     # Get probability of topic in each doc
     RHO <- matrix(NA, nrow = M, ncol = K)
@@ -114,7 +165,7 @@ g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
         }
     }
 
-    grad_PHI <- matrix(0, nrow = K, ncol = V)
+    # Gradient for PHI in simplex form.
     for (k in 1:K) {
         for (i in 1:M) {
             for (j in 1:Ns[i]) {
@@ -125,6 +176,7 @@ g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
     }
 
     if (soft_PHI) {
+        # Propogate to real valued form if desired
         grad_GAMM <- matrix(0, nrow = K, ncol = V-1)
         for (k in 1:K) {
             for (v in 1:(V-1)) {
@@ -163,7 +215,6 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
                           make_plot = FALSE, THETA_init = NULL, 
                           PSI_init = NULL, PHI_init = NULL, 
                           THETA_fix = list(), PSI_fix = list()) {
-
 
     M <- length(docs)
 
@@ -242,11 +293,11 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
         nlip(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
     }
 
-    #gradwrap <- function(par) {
-    #    ret <- par3mat(par, K, V, P)
-    #    grad <- g_nlip(ret$PHI, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE)
-    #    mat3par(grad$PHI)
-    #}
+    gradwrap <- function(par) {
+        ret <- par3mat(par, K, V, P)
+        grad <- g_nlip(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
+        mat3par(grad$grad_PHI, grad$grad_PSI, grad$grad_THETA)
+    }
 
 
     # Do random inits if none were provided
@@ -267,7 +318,7 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
 
     # Do the actual optimization
     fit <- optim(mat3par(PHI_n_init, PSI_init, THETA_init), joint_nlip_wrap, 
-                 method = 'BFGS', control = list('maxit' = 1e3))
+                 gr = gradwrap, method = 'BFGS', control = list('maxit' = 1e3))
     ests <- par3mat(fit$par, K, V, P)
 
     if (fit$convergence) {
@@ -282,5 +333,5 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
         comp_scat2d(ests$THETA, ests$PSI)
     }
 
-    return(list(par = ests, logpost = -fit$value))
+    return(list(par = ests, logpost = -fit$value, fit = fit))
 }
