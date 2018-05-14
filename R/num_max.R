@@ -65,10 +65,10 @@ nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
     return(-ll)
 }
 
-#' The Gradient of the Incomplete Log Posterior
+#' The Gradient of the Log Incomplete Posterior
 #' 
 #' this boii accepts a list of docs for right now.
-g_nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
+g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
     Ns <- sapply(docs, length)
     if (soft_PHI) {
         PHI <- t(apply(cbind(PHI, 0), 1, softmax))
@@ -126,7 +126,7 @@ g_nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
         }
     }
 
-    return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = grad_PHI))
+    return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_PHI))
 }
 
 #' Numerically Maximize complete Posterior.

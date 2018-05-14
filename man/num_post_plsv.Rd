@@ -9,7 +9,7 @@ num_post_plsv(docs, K, V, P, eta, gamma, beta, make_plot = FALSE,
   THETA_fix = list(), PSI_fix = list())
 }
 \arguments{
-\item{docs}{A term frequency matrix, that is, one with a row for each document, a column for each vocab word, and integer entries indicating the occurence of a word in a doc.}
+\item{docs}{A list of integer vectors, each subvector representing a document in the form of the indices of its words in the vocab.}
 
 \item{K}{The number of topics, an integer scalar.}
 
