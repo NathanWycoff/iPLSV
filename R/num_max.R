@@ -3,7 +3,7 @@
 
 ## Numerically maximize the posterior with latent vars integrated out.
 
-#' Negative Incomplete Log Posterior
+#' Negative Log Incomplete Posterior
 #'
 #' The log posterior with the latent class assignments integrated out, evaluated at PHI, THETA, PSI as specified, given docs.
 #'
@@ -17,7 +17,7 @@
 #' @param soft_PHI A boolean, if TRUE, PHI was provided on the logodds scales.
 #' @return A scalar, giving the negative log posterior density at the point.
 #' @export
-nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
+nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
     if (soft_PHI) {
         PHI <- t(apply(cbind(PHI, 0), 1, softmax))
     }
@@ -56,7 +56,10 @@ nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
 
     ## Generate Data
     for (i in 1:M) {
-        ll <- ll + dmultinom(docs[i,], prob = PI[i,], log = TRUE)
+        doc <- docs[[i]]
+        for (w in doc) {
+            ll <- ll + log(PI[i, w])
+        }
     }
 
     return(-ll)
@@ -130,7 +133,7 @@ g_nilp <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
 #'
 #' Numerically maximize the complete posterior of the PLSV model.
 #'
-#' @param docs A term frequency matrix, that is, one with a row for each document, a column for each vocab word, and integer entries indicating the occurence of a word in a doc.
+#' @param docs A list of integer vectors, each subvector representing a document in the form of the indices of its words in the vocab.
 #' @param K The number of topics, an integer scalar.
 #' @param V The number of unique words, an integer scalar.
 #' @param P The dimensionality of the embedding space, an integer, usually 2.
@@ -150,7 +153,7 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
                           THETA_fix = list(), PSI_fix = list()) {
 
 
-    M <- nrow(docs)
+    M <- length(docs)
 
     # Get the indices of fixed params.
     THETA_inds <- sapply(THETA_fix, function(i) i$ind)
@@ -222,9 +225,9 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
         return(list(PHI_n = PHI_n, THETA = THETA, PSI = PSI))
     }
 
-    joint_nclp_wrap <- function(par) {
+    joint_nlip_wrap <- function(par) {
         ret <- par3mat(par, K, V, P)
-        nclp(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
+        nlip(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
     }
 
     # Do random inits if none were provided
@@ -244,7 +247,7 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
     #TODO: Default inits based on LDA
 
     # Do the actual optimization
-    fit <- optim(mat3par(PHI_n_init, PSI_init, THETA_init), joint_nclp_wrap, 
+    fit <- optim(mat3par(PHI_n_init, PSI_init, THETA_init), joint_nlip_wrap, 
                  method = 'BFGS', control = list('maxit' = 1e3))
     ests <- par3mat(fit$par, K, V, P)
 
