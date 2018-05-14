@@ -11,13 +11,14 @@
 #source('R/lib.R')
 require(iplsv)
 source('R/num_max.R')
+source('R/lib.R')
 
 set.seed(1234)
 
 K <- 3
 V <- 4
-M <- 2
-N.mu <- 2
+M <- 20
+N.mu <- 20
 P <- 2
 eta <- 1
 gamma <- 0.1 * K
@@ -56,5 +57,31 @@ for (k in 1:K) {
     }
 }
 
+# Numerical gradient between PHI and GAMMA, the latent space PHI.
+GAMM <- inv_softmax(ret$PHI)
+nPG <- matrix(NA, nrow = K, ncol = V-1)
+for (k in 1:K) {
+    for (v in 1:(V-1)) {
+        phi <- t(apply(cbind(GAMM, 0), 1, softmax))[1,1]
+        GAMM[k,v] <- GAMM[k,v] + h
+        phip <- t(apply(cbind(GAMM, 0), 1, softmax))[1,1]
+        nPG[k,v] <- (phip - phi) / h
+    }
+}
+
+# try to predict it 
+
+nR <- matrix(NA, nrow = K, ncol = V-1)
+ret$PHI <- inv_softmax(ret$PHI)
+for (k in 1:K) {
+    for (v in 1:(V-1)) {
+        f <- nlip(ret$PHI, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE)
+        ret$PHI[k,v] <- ret$PHI[k,v] + h
+        fp <- nlip(ret$PHI, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE)
+        nR[k,v] <- (fp - f) / h
+    }
+}
+
 g_nlip(ret$PHI, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = FALSE)
+g_nlip(ret$PHI, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE)
 print(list(nP, nT, nH))

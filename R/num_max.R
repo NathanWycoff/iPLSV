@@ -114,19 +114,31 @@ g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
         }
     }
 
-    #Gradients for PHI
     grad_PHI <- matrix(0, nrow = K, ncol = V)
     for (k in 1:K) {
         for (i in 1:M) {
             for (j in 1:Ns[i]) {
                 w <- docs[[i]][j]
-                print(RHO[i,k] / PI[i, w])
                 grad_PHI[k, w] <- grad_PHI[k, w] + RHO[i,k] / PI[i, w]
             }
         }
     }
 
-    return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_PHI))
+    if (soft_PHI) {
+        grad_GAMM <- matrix(0, nrow = K, ncol = V-1)
+        for (k in 1:K) {
+            for (v in 1:(V-1)) {
+                for (u in 1:V) {
+                    grad_GAMM[k, v] <- grad_GAMM[k,v] + 
+                        grad_PHI[k, u] * PHI[k,u] * (as.numeric(u==v) - PHI[k,v])
+                }
+            }
+        }
+        return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_GAMM))
+    } else {
+        return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_PHI))
+    }
+
 }
 
 #' Numerically Maximize complete Posterior.
@@ -229,6 +241,13 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
         ret <- par3mat(par, K, V, P)
         nlip(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
     }
+
+    #gradwrap <- function(par) {
+    #    ret <- par3mat(par, K, V, P)
+    #    grad <- g_nlip(ret$PHI, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE)
+    #    mat3par(grad$PHI)
+    #}
+
 
     # Do random inits if none were provided
     if (is.null(PSI_init)) {
