@@ -186,11 +186,13 @@ g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
                 }
             }
         }
+
+        print(grad_GAMM)
+
         return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_GAMM))
     } else {
         return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_PHI))
     }
-
 }
 
 #' Numerically Maximize complete Posterior.
