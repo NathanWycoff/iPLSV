@@ -9,9 +9,9 @@
 #source('R/num_max.R')
 #source('R/generate.R')
 #source('R/lib.R')
-require(iplsv)
-source('R/num_max.R')
-source('R/lib.R')
+#require(iplsv)
+#source('R/num_max.R')
+#source('R/lib.R')
 
 set.seed(1234)
 

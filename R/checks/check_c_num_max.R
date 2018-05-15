@@ -1,7 +1,7 @@
 #!/usr/bin/Rscript
 #  R/checks/check_c_num_max.R Author "Nathan Wycoff <nathanbrwycoff@gmail.com>" Date 05.14.2018
 
-## Test that Rcpp's implementation of the num max funcs mathces the R implementation.
+### Test that Rcpp's implementation of the num max funcs mathces the R implementation.
 require(Rcpp)
 require(RcppArmadillo)
 sourceCpp('./src/nlip.cpp')
@@ -31,5 +31,5 @@ nlipC(PHI_n, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta))
 PHI_n <- t(apply(ret$PHI, 1, inv_softmax))[,-V]
 Ns <- sapply(ret$docs, length)
 
-g_nlip(PHI_n, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE)
-g_nlipC(PHI_n, ret$THETA, ret$PSI, Ns, ret$docs, eta, gamma, beta)
+microbenchmark(g_nlip(PHI_n, ret$THETA, ret$PSI, ret$docs, eta, gamma, beta, soft_PHI = TRUE),
+g_nlipC(PHI_n, ret$THETA, ret$PSI, Ns, ret$docs, eta, gamma, beta))

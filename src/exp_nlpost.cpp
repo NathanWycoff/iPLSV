@@ -4,7 +4,7 @@
 using namespace Rcpp;
 
 // Note: parameterized in terms of phi = precision = 1/variance = 1/sqrt(std)
-double logdnorm(double x, double mu, double phi) {
+double logdnorm1(double x, double mu, double phi) {
     // TODO: Remove normalizing constant.
     return 0.5 * log(phi / (2.0 * M_PI)) - 0.5 * pow(x - mu, 2) * phi;
 }
@@ -35,13 +35,13 @@ double exp_nlpostC(List Z_exp, NumericMatrix PHI, NumericMatrix THETA,
     // Topic Locations
     for (int k = 0; k < K; k++) {
         for (int p = 0; p < P; p++) {
-            ll += logdnorm(PSI(k, p), 0, beta);
+            ll += logdnorm1(PSI(k, p), 0, beta);
         }
     }
     // Doc Locations
     for (int m = 0; m < M; m++) {
         for (int p = 0; p < P; p++) {
-            ll += logdnorm(THETA(m, p), 0, gamma);
+            ll += logdnorm1(THETA(m, p), 0, gamma);
         }
     }
 

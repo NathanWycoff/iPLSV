@@ -187,8 +187,6 @@ g_nlip <- function(PHI, THETA, PSI, docs, eta, gamma, beta, soft_PHI) {
             }
         }
 
-        print(grad_GAMM)
-
         return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_GAMM))
     } else {
         return(list(grad_THETA = -grad_THETA, grad_PSI = -grad_PSI, grad_PHI = -grad_PHI))
@@ -292,12 +290,14 @@ num_post_plsv <- function(docs, K, V, P, eta, gamma, beta,
 
     joint_nlip_wrap <- function(par) {
         ret <- par3mat(par, K, V, P)
-        nlip(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
+        nlipC(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta)
     }
+
+    Ns <- sapply(docs, length)
 
     gradwrap <- function(par) {
         ret <- par3mat(par, K, V, P)
-        grad <- g_nlip(ret$PHI_n, ret$THETA, ret$PSI, docs, eta, gamma, beta, soft_PHI = TRUE)
+        grad <- g_nlipC(ret$PHI_n, ret$THETA, ret$PSI, Ns, docs, eta, gamma, beta)
         mat3par(grad$grad_PHI, grad$grad_PSI, grad$grad_THETA)
     }
 

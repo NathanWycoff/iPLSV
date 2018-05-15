@@ -2,14 +2,22 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 softmaxC <- function(x) {
-    .Call('_iplsv_softmaxC', PACKAGE = 'iplsv', x)
+    .Call(`_iplsv_softmaxC`, x)
 }
 
 exp_nlpostC <- function(Z_exp, PHI, THETA, PSI, docs, Ns, eta, gamma, beta) {
-    .Call('_iplsv_exp_nlpostC', PACKAGE = 'iplsv', Z_exp, PHI, THETA, PSI, docs, Ns, eta, gamma, beta)
+    .Call(`_iplsv_exp_nlpostC`, Z_exp, PHI, THETA, PSI, docs, Ns, eta, gamma, beta)
 }
 
 g_enlpC <- function(Z_exp, PHI, THETA, PSI, docs, Ns, eta, gamma, beta) {
-    .Call('_iplsv_g_enlpC', PACKAGE = 'iplsv', Z_exp, PHI, THETA, PSI, docs, Ns, eta, gamma, beta)
+    .Call(`_iplsv_g_enlpC`, Z_exp, PHI, THETA, PSI, docs, Ns, eta, gamma, beta)
+}
+
+nlipC <- function(PHI, THETA, PSI, docs, eta, gamma, beta) {
+    .Call(`_iplsv_nlipC`, PHI, THETA, PSI, docs, eta, gamma, beta)
+}
+
+g_nlipC <- function(PHI, THETA, PSI, Ns, docs, eta, gamma, beta) {
+    .Call(`_iplsv_g_nlipC`, PHI, THETA, PSI, Ns, docs, eta, gamma, beta)
 }
 
