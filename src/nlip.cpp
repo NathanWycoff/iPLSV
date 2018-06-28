@@ -90,8 +90,8 @@ double nlipC(arma::mat PHI, arma::mat THETA, arma::mat PSI, List docs, double et
     arma::uvec doc;
     for (int i = 0; i < M; i++) {
         doc = as<arma::uvec>(docs[i]);
-        for (int w : doc) {
-            ll += log(ETA(i, w-1));
+        for (int w = 0; w < doc.n_elem; w++) {
+            ll += log(ETA(i, doc(w)-1));
         }
     }
 

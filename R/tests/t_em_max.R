@@ -19,9 +19,7 @@ beta <- 0.1 * M
 
 ret <- gen_plsv(K, V, M, N.mu, P, eta, gamma, beta)
 
-# Convert docs from TF form to a list of vecs
-docs_list <- lapply(1:M, function(i) unlist(sapply(1:V, function(j) rep(j, ret$docs[i,j]))))
-docs <- docs_list
+docs <- ret$docs
 
 #Test using smart init
 set.seed(123)
@@ -33,7 +31,7 @@ system.time(fit <- em_plsv(docs, K, V, P, eta, gamma, beta,
                           max_iters = 1e3, lik_grad = 'Cpp'))
 
 comp_scat2d(ret$THETA, ret$PSI)
-quartz()
+x11()
 comp_scat2d(fit$par$THETA, fit$par$PSI)
 
 # Test that we don't move away from the truth

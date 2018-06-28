@@ -70,6 +70,7 @@ comp_scat2d <- function(A, B, rot = FALSE, scale_ax = FALSE, obnoxious = FALSE) 
     Bdf$ID <- rownames(Bdf)
 
     #Plot the two data.
+    colnames(Adf) <- colnames(Bdf) <- c('V1', 'V2', 'ID')
     p <- ggplot(Adf, aes(x= V1, y= V2)) +
         geom_text(aes(label=ID)) +
         geom_text(data = Bdf,
