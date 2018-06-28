@@ -1,3 +1,7 @@
 # vim temp files.
 *.swp
 *.swo
+
+# Compiled C/Cpp code
+*.so
+*.o

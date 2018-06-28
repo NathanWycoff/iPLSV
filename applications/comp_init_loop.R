@@ -36,8 +36,7 @@ ret <- parLapply(cl, 1:data_sets, function(d)  {
                      ret <- gen_plsv(K, V, M, N.mu, P, eta, gamma, beta)
 
                      # Convert docs from TF form to a list of vecs
-                     docs_list <- lapply(1:M, function(i) unlist(sapply(1:V, function(j) rep(j, ret$docs[i,j]))))
-                     docs <- docs_list
+                     docs <- ret$docs
 
                      # Do a smart initialization
                      set.seed(123)
@@ -47,6 +46,13 @@ ret <- parLapply(cl, 1:data_sets, function(d)  {
                                                        THETA_fix = list(), PSI_fix = list(),
                                                        verbose = FALSE, thresh = 5e-2,
                                                        max_iters = 1e3))
+
+                     #TODO: Finish this lmao.
+                     tt <- system.time(num_post_plsv(docs, K, V, P, eta, gamma, beta, 
+                                               make_plot = FALSE, THETA_init = NULL, 
+                                               PSI_init = NULL, PHI_init = NULL) 
+                                               
+
                      ldatime <- tt[1]
                      ldacost <- nclp(fit$par$PHI, fit$par$THETA, fit$par$PSI, ret$docs, eta, gamma, beta)
 
